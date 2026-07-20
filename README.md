@@ -1,2 +1,6 @@
-# Puter.js-in-OpenCode-GLM-4.7-Flash.
-Use GLM 4.7 Flash for free with no limitations in OpenCode using Puter.js.
+# OpenCode Puter Bridge
+
+**Select your language / Selecione seu idioma**
+
+- 🇺🇸 [English (en-US)](./README-en-US.md)
+- 🇧🇷 [Português (pt-BR)](./README-pt-BR.md)
