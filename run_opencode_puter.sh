@@ -26,4 +26,5 @@ if command -v xdg-open >/dev/null 2>&1; then
     xdg-open "$puter_url" >/dev/null 2>&1 || true
 fi
 
-opencode "$@"
+opencode_bin="${OPENCODE_BIN:-opencode}"
+"$opencode_bin" "$@"
