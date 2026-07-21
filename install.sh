@@ -34,8 +34,16 @@ fi
 
 mkdir -p "$bridge_dir" "$bin_dir" "$config_dir"
 
-bridge_port="${PUTER_BRIDGE_PORT:-8765}"
-if [[ -z "${PUTER_BRIDGE_PORT:-}" ]]; then
+configured_port=""
+if [[ -f "$config_dir/opencode.jsonc" ]]; then
+    configured_port="$(sed -nE 's#.*127\.0\.0\.1:([0-9]+)/v1.*#\1#p' "$config_dir/opencode.jsonc" | head -n 1)"
+fi
+
+bridge_port="${PUTER_BRIDGE_PORT:-${configured_port:-8765}}"
+if [[ -n "$configured_port" && -z "${PUTER_BRIDGE_PORT:-}" ]]; then
+    # Keep updates aligned with the configuration, even if the bridge is running.
+    :
+elif [[ -z "${PUTER_BRIDGE_PORT:-}" ]]; then
     while ! port_available "$bridge_port"; do
         bridge_port=$((bridge_port + 1))
         if (( bridge_port > 8799 )); then
