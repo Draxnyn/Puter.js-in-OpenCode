@@ -44,26 +44,18 @@ Nenhum pacote Python precisa ser instalado.
 
 ## Instalação
 
-1. Copie ou mescle [`templates/opencode.jsonc`](./templates/opencode.jsonc) na configuração do OpenCode:
+Clone o repositório e execute o instalador:
 
-   - Linux/macOS: `~/.config/opencode/opencode.jsonc`
-   - Windows: use a pasta de configuração do OpenCode.
+```bash
+git clone https://github.com/Draxnyn/Puter.js-in-OpenCode-GLM-4.7-Flash.git
+cd Puter.js-in-OpenCode-GLM-4.7-Flash
+./install.sh
+source ~/.bashrc
+```
 
-   O template expõe intencionalmente apenas o modelo GLM do Puter.
+O instalador baixa o OpenCode pelo instalador oficial caso ele ainda não esteja disponível. Depois instala a ponte em `~/.local/share/opencode-puter-bridge`, o wrapper em `~/.local/bin/opencode` e a configuração modelo quando ainda não existe uma configuração do OpenCode.
 
-2. Torne o inicializador executável:
-
-   ```bash
-   chmod +x run_opencode_puter.sh
-   ```
-
-3. Inicie o OpenCode pela ponte:
-
-   ```bash
-   ./run_opencode_puter.sh
-   ```
-
-4. Mantenha a aba **Puter → OpenCode Bridge** aberta enquanto usa o OpenCode.
+Inicie a versão Puter com `opencode`. Para abrir o OpenCode normal, sem a ponte, use `opencode -n`. No WSL, a página da ponte é aberta no navegador do Windows. Mantenha essa aba aberta enquanto usa o OpenCode.
 
 ---
 
@@ -71,7 +63,7 @@ Nenhum pacote Python precisa ser instalado.
 
 | Variável | Padrão | Função |
 |---|---:|---|
-| `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. |
+| `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. Faixa aceita: 1–8. |
 | `PUTER_BRIDGE_PORT` | `8765` | Porta local da ponte. |
 | `PUTER_BRIDGE_TIMEOUT` | `180` | Tempo de espera pela resposta do navegador, em segundos. |
 
@@ -106,3 +98,12 @@ $XDG_STATE_HOME/opencode/puter-bridge.log
 ```
 
 Quando `XDG_STATE_HOME` não está definido, usa `~/.local/state/opencode/puter-bridge.log`.
+
+---
+
+## Segurança
+
+- A ponte escuta somente em `127.0.0.1`.
+- O inicializador gera um token local aleatório.
+- Não publique uma porta de ponte ativa nem sua URL com token.
+- Não inclua arquivos `.env`, logs ou dados de navegador no repositório.
