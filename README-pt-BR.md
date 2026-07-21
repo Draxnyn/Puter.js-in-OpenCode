@@ -55,6 +55,8 @@ source ~/.bashrc
 
 O instalador baixa o OpenCode pelo instalador oficial caso ele ainda não esteja disponível. Depois instala a ponte em `~/.local/share/opencode-puter-bridge`, o wrapper em `~/.local/bin/opencode` e a configuração modelo quando ainda não existe uma configuração do OpenCode.
 
+Se a porta `8765` já estiver ocupada, o instalador escolhe automaticamente a próxima porta livre e a aplica tanto à ponte quanto à configuração do OpenCode.
+
 Inicie a versão Puter com `opencode`. Para abrir o OpenCode normal, sem a ponte, use `opencode -n`. No WSL, a página da ponte é aberta no navegador do Windows. Mantenha essa aba aberta enquanto usa o OpenCode.
 
 ---
