@@ -19,7 +19,7 @@ const choices = [
   },
 ]
 
-export const tui = async (api) => {
+const tui = async (api) => {
   const modelFile = process.env.PUTER_SUBAGENT_MODEL_FILE
   if (!modelFile || !api.command) return
 
@@ -60,4 +60,9 @@ export const tui = async (api) => {
       },
     },
   ])
+}
+
+export default {
+  id: "puter-subagent-selector",
+  tui,
 }

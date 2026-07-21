@@ -29,7 +29,16 @@ for dependency in git curl python3 openssl; do
 done
 
 if [[ ! -x "$real_opencode" ]]; then
-    existing_opencode="$(command -v opencode || true)"
+    existing_opencode=""
+    for candidate in /usr/local/bin/opencode /usr/bin/opencode; do
+        if [[ -x "$candidate" && "$candidate" != "$bin_dir/opencode" ]]; then
+            existing_opencode="$candidate"
+            break
+        fi
+    done
+    if [[ -z "$existing_opencode" ]]; then
+        existing_opencode="$(command -v opencode || true)"
+    fi
     if [[ -n "$existing_opencode" && "$existing_opencode" != "$bin_dir/opencode" ]]; then
         real_opencode="$existing_opencode"
     else
