@@ -52,6 +52,8 @@ source ~/.bashrc
 
 The installer downloads OpenCode from its official installer when it is not already available. It then installs the bridge in `~/.local/share/opencode-puter-bridge`, the wrapper in `~/.local/bin/opencode`, and the template configuration when no OpenCode configuration exists yet.
 
+If port `8765` is already in use, the installer automatically selects the next free port and applies it to both the bridge and the OpenCode configuration.
+
 Start the Puter version:
 
 ```bash
