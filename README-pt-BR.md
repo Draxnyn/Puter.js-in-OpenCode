@@ -23,12 +23,20 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 
 ## O que ele fornece
 
-- Três modelos selecionáveis: GLM-4.7 Flash, NVIDIA Nemotron Nano 9B V2 e Baidu Qianfan CoBuddy.
+- Modelo mestre padrão: `puter/glm-4.7-flash`.
 - Endpoint `/v1/chat/completions` compatível com OpenAI.
 - Tradução de tool calls para ações agenciais do OpenCode.
 - Até sete subagentes usando o modelo escolhido com `/subagent`.
 - Concorrência configurável no navegador, com duas requisições Puter simultâneas por padrão.
 - Repasse de uso de tokens quando o Puter inclui esses dados na resposta.
+
+### Modelos disponíveis
+
+| Modelo | ID no Puter | Uso indicado |
+|---|---|---|
+| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Modelo mestre e de subagentes por padrão; programação agencial e ferramentas |
+| NVIDIA Nemotron Nano 9B V2 | `nvidia/nemotron-nano-9b-v2:free` | Chat, raciocínio configurável e alta velocidade |
+| Baidu Qianfan CoBuddy | `baidu/cobuddy:free` | Programação, agentes e ferramentas |
 
 ---
 
@@ -47,8 +55,8 @@ Nenhum pacote Python precisa ser instalado.
 Clone o repositório e execute o instalador:
 
 ```bash
-git clone https://github.com/Draxnyn/Puter.js-in-OpenCode-GLM-4.7-Flash.git
-cd Puter.js-in-OpenCode-GLM-4.7-Flash
+git clone https://github.com/Draxnyn/Puter.js-in-OpenCode.git
+cd Puter.js-in-OpenCode
 bash install.sh
 source ~/.bashrc
 ```
