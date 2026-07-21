@@ -30,8 +30,9 @@ printf 'Open this page, sign in to Puter if needed, and keep it open:\n%s\nBridg
 
 open_browser() {
     if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null \
-        && [[ -x /mnt/c/Windows/System32/cmd.exe ]]; then
-        /mnt/c/Windows/System32/cmd.exe /c start "" "$puter_url" >/dev/null 2>&1
+        && [[ -x /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe ]]; then
+        /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
+            -NoProfile -NonInteractive -Command "Start-Process '$puter_url'" >/dev/null 2>&1
     elif command -v xdg-open >/dev/null 2>&1; then
         xdg-open "$puter_url" >/dev/null 2>&1
     elif command -v open >/dev/null 2>&1; then
