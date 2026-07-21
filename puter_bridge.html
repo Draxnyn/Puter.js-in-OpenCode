@@ -30,22 +30,38 @@
   let activeRequests = 0;
   let bridgeStarted = false;
 
-  const textFrom = value => value?.message?.content ?? value?.text ?? String(value ?? '');
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const errorText = error => error?.message || error?.msg || (typeof error === 'object' ? JSON.stringify(error) : String(error || 'Unknown error'));
+  const isQuotaError = error => /\b(quota|rate[ -]?limit|too many requests?|resource exhausted|credits? exceeded)\b|\b429\b/i.test(errorText(error));
+
+  async function chatWithQuotaRetry(request) {
+    let attempt = 0;
+    for (;;) {
+      try {
+        return await puter.ai.chat(request.prompt, {
+          model: request.model,
+          ...(request.options || {})
+        });
+      } catch (error) {
+        if (!isQuotaError(error)) throw error;
+        attempt += 1;
+        const delay = Math.min(30_000, 5_000 * 2 ** (attempt - 1));
+        status.textContent = `Puter quota reached. Retrying this request in ${Math.ceil(delay / 1000)}s (${activeRequests}/${maxConcurrentRequests})…`;
+        await wait(delay);
+      }
+    }
+  }
 
   async function answer(request) {
     activeRequests += 1;
     status.textContent = `Querying ${request.model} (${activeRequests}/${maxConcurrentRequests})…`;
     try {
-      const result = await puter.ai.chat(request.prompt, {
-        model: request.model,
-        ...(request.options || {})
-      });
+      const result = await chatWithQuotaRetry(request);
       await fetch(`${endpoint}/answer`, { method: 'POST', headers,
         body: JSON.stringify({ id: request.id, result }) });
     } catch (error) {
       await fetch(`${endpoint}/answer`, { method: 'POST', headers,
-        body: JSON.stringify({ id: request.id, error: error.message || String(error) }) });
+        body: JSON.stringify({ id: request.id, error: errorText(error) }) });
     } finally {
       activeRequests -= 1;
       status.textContent = activeRequests
