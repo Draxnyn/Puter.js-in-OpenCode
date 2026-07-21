@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash continua sendo o modelo mestre padrão**, enquanto o modelo dos subagentes pode ser escolhido na TUI.
+O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash é o modelo mestre padrão** e encaminha automaticamente o trabalho para subagentes especializados.
 
 ---
 
@@ -26,7 +26,8 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 - Modelo mestre padrão: `puter/glm-4.7-flash`.
 - Endpoint `/v1/chat/completions` compatível com OpenAI.
 - Tradução de tool calls para ações agenciais do OpenCode.
-- Até sete subagentes usando o modelo escolhido com `/subagent`.
+- Até sete subagentes de código, raciocínio e visão com roteamento automático.
+- Envio de imagens e PDFs locais aos subagentes de visão GLM 4.6V Flash.
 - Concorrência configurável no navegador, com duas requisições Puter simultâneas por padrão.
 - Repasse de uso de tokens quando o Puter inclui esses dados na resposta.
 
@@ -34,9 +35,10 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 
 | Modelo | ID no Puter | Uso indicado |
 |---|---|---|
-| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Modelo mestre e de subagentes por padrão; programação agencial e ferramentas |
-| NVIDIA Nemotron Nano 9B V2 | `nvidia/nemotron-nano-9b-v2:free` | Chat, raciocínio configurável e alta velocidade |
-| Baidu Qianfan CoBuddy | `baidu/cobuddy:free` | Programação, agentes e ferramentas |
+| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Mestre padrão; roteamento, programação agencial e ferramentas |
+| Cohere North Mini Code | `cohere/north-mini-code:free` | Código e repositórios |
+| Prism ML Ternary Bonsai 27B | `prism-ml/ternary-bonsai-27b` | Raciocínio pesado e arquitetura |
+| Z.AI GLM 4.6V Flash | `z-ai/glm-4.6v-flash` | Imagens, capturas de tela, documentos visuais e PDFs |
 
 ---
 
@@ -78,6 +80,7 @@ A página da ponte sempre exibe o botão **Sign in to Puter**. Depois da autenti
 | `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. Faixa aceita: 1–8. |
 | `PUTER_BRIDGE_PORT` | `8765` | Porta local da ponte. |
 | `PUTER_BRIDGE_TIMEOUT` | `600` | Tempo de espera pela resposta do navegador, em segundos. |
+| `PUTER_MAX_LOCAL_MEDIA_BYTES` | `20971520` | Tamanho máximo de imagem ou PDF local enviado à visão, em bytes. |
 
 Exemplo:
 
@@ -89,17 +92,15 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ## Subagentes
 
-O mestre sempre começa com `puter/glm-4.7-flash`. O template cria `puter-worker-1` até `puter-worker-7`; eles não podem criar novos trabalhadores.
+O mestre sempre começa com `puter/glm-4.7-flash`. O OpenCode distribui o trabalho entre sete identidades fixas:
 
-Digite `/subagent` para abrir um seletor nativo na TUI, semelhante ao `/model`. Os modelos disponíveis para os subagentes são:
+- `puter-code-1` até `puter-code-3` usam North Mini Code.
+- `puter-reason-1` e `puter-reason-2` usam Ternary Bonsai 27B.
+- `puter-vision-1` e `puter-vision-2` usam GLM 4.6V Flash.
 
-- GLM 4.7 Flash — padrão.
-- NVIDIA Nemotron Nano 9B V2 — `nvidia/nemotron-nano-9b-v2:free`.
-- Baidu Qianfan CoBuddy — `baidu/cobuddy:free`.
+Quando um trabalhador de visão recebe uma conversa contendo o caminho local de uma imagem ou PDF entre aspas, a ponte anexa o arquivo real em vez de encaminhar somente o caminho. Um caminho `.drawio` inexistente também encontra a exportação `.drawio.png`, quando ela existe. PDFs são enviados temporariamente ao filesystem autenticado do Puter e apagados depois da resposta.
 
-Alterar `/model` muda o modelo primário atual. Alterar `/subagent` muda apenas as próximas chamadas de subagentes. A seleção fica armazenada localmente e é reutilizada na próxima execução.
-
-O próprio OpenCode controla o agendamento das tarefas. A configuração limita as identidades de trabalhadores disponíveis a sete.
+Os trabalhadores não podem criar novos trabalhadores. O OpenCode controla o agendamento, enquanto a configuração limita as identidades disponíveis a sete.
 
 ---
 

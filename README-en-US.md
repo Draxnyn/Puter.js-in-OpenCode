@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **GLM-4.7 Flash remains the default master model**, while the subagent model can be selected in the TUI.
+**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **GLM-4.7 Flash is the default master model** and automatically routes work to specialized subagents.
 
 ---
 
@@ -23,7 +23,8 @@ The bridge stays on `127.0.0.1`; no Puter session token is sent to an external s
 - Default master model: `puter/glm-4.7-flash`.
 - OpenAI-compatible `/v1/chat/completions` endpoint.
 - Tool-call translation for agentic OpenCode actions.
-- Up to seven subagents using the model selected with `/subagent`.
+- Up to seven automatically routed code, reasoning, and vision subagents.
+- Local image and PDF forwarding to the GLM 4.6V Flash vision workers.
 - Configurable browser-side concurrency, defaulting to two simultaneous Puter requests.
 - Token usage forwarding when Puter includes usage metadata in its response.
 
@@ -31,9 +32,10 @@ The bridge stays on `127.0.0.1`; no Puter session token is sent to an external s
 
 | Model | Puter ID | Intended use |
 |---|---|---|
-| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Default master and subagent model; agentic coding and tools |
-| NVIDIA Nemotron Nano 9B V2 | `nvidia/nemotron-nano-9b-v2:free` | Chat, configurable reasoning and high speed |
-| Baidu Qianfan CoBuddy | `baidu/cobuddy:free` | Programming, agents and tools |
+| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Default master; routing, agentic coding and tools |
+| Cohere North Mini Code | `cohere/north-mini-code:free` | Code and repository work |
+| Prism ML Ternary Bonsai 27B | `prism-ml/ternary-bonsai-27b` | Heavier reasoning and architecture |
+| Z.AI GLM 4.6V Flash | `z-ai/glm-4.6v-flash` | Images, screenshots, visual documents and PDFs |
 
 ---
 
@@ -87,6 +89,7 @@ The bridge page always displays a **Sign in to Puter** button. After authenticat
 | `PUTER_MAX_CONCURRENT` | `2` | Maximum simultaneous Puter calls. Accepted range: 1–8. |
 | `PUTER_BRIDGE_PORT` | `8765` | Local bridge port. |
 | `PUTER_BRIDGE_TIMEOUT` | `600` | Browser response timeout, in seconds. |
+| `PUTER_MAX_LOCAL_MEDIA_BYTES` | `20971520` | Maximum local image or PDF size forwarded to vision, in bytes. |
 
 Example:
 
@@ -98,17 +101,15 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ## Subagents
 
-The master always defaults to `puter/glm-4.7-flash`. The template creates `puter-worker-1` through `puter-worker-7`; they cannot create more workers.
+The master always defaults to `puter/glm-4.7-flash`. OpenCode routes work among seven fixed worker identities:
 
-Type `/subagent` to open a native TUI selector, similar to `/model`. The available subagent models are:
+- `puter-code-1` through `puter-code-3` use North Mini Code.
+- `puter-reason-1` and `puter-reason-2` use Ternary Bonsai 27B.
+- `puter-vision-1` and `puter-vision-2` use GLM 4.6V Flash.
 
-- GLM 4.7 Flash — default.
-- NVIDIA Nemotron Nano 9B V2 — `nvidia/nemotron-nano-9b-v2:free`.
-- Baidu Qianfan CoBuddy — `baidu/cobuddy:free`.
+When a vision worker receives a conversation containing a quoted local image or PDF path, the bridge attaches the actual file instead of forwarding only its path. A missing `.drawio` path also resolves to its exported `.drawio.png` when present. PDFs are uploaded temporarily to the authenticated Puter filesystem for analysis and deleted after the response.
 
-Changing `/model` changes the current primary model. Changing `/subagent` changes only future subagent calls. The selection is stored locally and reused on the next launch.
-
-OpenCode itself controls task scheduling. The configuration limits the available worker identities to seven.
+Workers cannot create more workers. OpenCode controls scheduling, while the configuration limits the available identities to seven.
 
 ---
 
