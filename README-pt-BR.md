@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador e está configurado para o **GLM-4.7 Flash**.
+O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash continua sendo o modelo mestre padrão**, enquanto o modelo dos subagentes pode ser escolhido na TUI.
 
 ---
 
@@ -14,7 +14,7 @@ O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compat
 O OpenCode já aceita provedores compatíveis com OpenAI. Este projeto expõe um endpoint local que converte requisições do OpenCode em chamadas `puter.ai.chat()` e converte a resposta de volta para o formato chat-completions da OpenAI.
 
 ```text
-OpenCode → ponte local → navegador com sessão Puter → GLM-4.7 Flash
+OpenCode → ponte local → navegador com sessão Puter → modelo Puter selecionado
 ```
 
 A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um servidor externo.
@@ -23,10 +23,10 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 
 ## O que ele fornece
 
-- Um único modelo configurado: `puter/glm-4.7-flash`.
+- Três modelos selecionáveis: GLM-4.7 Flash, NVIDIA Nemotron Nano 9B V2 e Baidu Qianfan CoBuddy.
 - Endpoint `/v1/chat/completions` compatível com OpenAI.
 - Tradução de tool calls para ações agenciais do OpenCode.
-- Até sete subagentes GLM disponíveis para o agente mestre.
+- Até sete subagentes usando o modelo escolhido com `/subagent`.
 - Concorrência configurável no navegador, com duas requisições Puter simultâneas por padrão.
 - Repasse de uso de tokens quando o Puter inclui esses dados na resposta.
 
@@ -79,7 +79,15 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ## Subagentes
 
-O template cria `puter-worker-1` até `puter-worker-7`. O agente `build` só pode delegar para esses trabalhadores; os trabalhadores não podem criar novos trabalhadores. Todos usam o mesmo modelo GLM.
+O mestre sempre começa com `puter/glm-4.7-flash`. O template cria `puter-worker-1` até `puter-worker-7`; eles não podem criar novos trabalhadores.
+
+Digite `/subagent` para abrir um seletor nativo na TUI, semelhante ao `/model`. Os modelos disponíveis para os subagentes são:
+
+- GLM 4.7 Flash — padrão.
+- NVIDIA Nemotron Nano 9B V2 — `nvidia/nemotron-nano-9b-v2:free`.
+- Baidu Qianfan CoBuddy — `baidu/cobuddy:free`.
+
+Alterar `/model` muda o modelo primário atual. Alterar `/subagent` muda apenas as próximas chamadas de subagentes. A seleção fica armazenada localmente e é reutilizada na próxima execução.
 
 O próprio OpenCode controla o agendamento das tarefas. A configuração limita as identidades de trabalhadores disponíveis a sete.
 
