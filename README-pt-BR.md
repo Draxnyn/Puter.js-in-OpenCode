@@ -49,7 +49,7 @@ Clone o repositório e execute o instalador:
 ```bash
 git clone https://github.com/Draxnyn/Puter.js-in-OpenCode-GLM-4.7-Flash.git
 cd Puter.js-in-OpenCode-GLM-4.7-Flash
-./install.sh
+bash install.sh
 source ~/.bashrc
 ```
 
