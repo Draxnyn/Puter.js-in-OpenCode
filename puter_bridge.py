@@ -184,7 +184,7 @@ def attach_local_media(messages: list[object], puter_model: str) -> list[object]
         mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         data_url = f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
         if mime.startswith("image/"):
-            content.append({"type": "image_url", "image_url": {"url": data_url}})
+            content.append({"type": "bridge_media", "data_url": data_url})
         else:
             content.append({
                 "type": "local_file",
@@ -243,12 +243,7 @@ def normalize_messages_for_puter(messages: list[object]) -> list[dict[str, objec
                 elif block_type == "image_url" and isinstance(block.get("image_url"), dict):
                     url = str(block["image_url"].get("url", ""))
                     if url:
-                        blocks.append({
-                            "type": "local_file",
-                            "name": "image-attachment",
-                            "mime": "image/*",
-                            "data_url": url,
-                        })
+                        blocks.append({"type": "bridge_media", "data_url": url})
                 else:
                     # OpenCode includes blocks such as tool-call and tool-result.
                     # Puter only accepts text and file blocks, so preserve their

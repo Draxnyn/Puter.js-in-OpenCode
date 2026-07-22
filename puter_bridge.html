@@ -36,10 +36,15 @@
 
   async function prepareLocalFiles(request) {
     const temporaryPaths = [];
+    const mediaURLs = [];
     let fileIndex = 0;
     const prompt = await Promise.all(request.prompt.map(async message => {
       if (!Array.isArray(message?.content)) return message;
       const content = await Promise.all(message.content.map(async part => {
+        if (part?.type === 'bridge_media') {
+          mediaURLs.push(part.data_url);
+          return null;
+        }
         if (part?.type !== 'local_file') return part;
         const blob = await fetch(part.data_url).then(response => response.blob());
         const safeName = String(part.name || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -51,20 +56,34 @@
         temporaryPaths.push(uploaded.path);
         return { type: 'file', puter_path: uploaded.path };
       }));
-      return { ...message, content };
+      return { ...message, content: content.filter(Boolean) };
     }));
-    return { prompt, temporaryPaths };
+    const mediaPrompt = prompt.map(message => {
+      if (typeof message?.content === 'string') return message.content;
+      if (!Array.isArray(message?.content)) return '';
+      return message.content
+        .filter(part => part?.type === 'text')
+        .map(part => part.text || '')
+        .join('\n');
+    }).filter(Boolean).join('\n\n');
+    return { prompt, temporaryPaths, mediaURLs, mediaPrompt };
   }
 
   async function removeTemporaryFiles(paths) {
     await Promise.allSettled(paths.map(path => puter.fs.delete(path)));
   }
 
-  async function chatWithQuotaRetry(request, prompt) {
+  async function chatWithQuotaRetry(request, prepared) {
     let attempt = 0;
     for (;;) {
       try {
-        return await puter.ai.chat(prompt, {
+        if (prepared.mediaURLs.length) {
+          return await puter.ai.chat(prepared.mediaPrompt, prepared.mediaURLs, false, {
+            model: request.model,
+            ...(request.options || {})
+          });
+        }
+        return await puter.ai.chat(prepared.prompt, {
           model: request.model,
           ...(request.options || {})
         });
@@ -85,7 +104,7 @@
     try {
       const prepared = await prepareLocalFiles(request);
       temporaryPaths = prepared.temporaryPaths;
-      const result = await chatWithQuotaRetry(request, prepared.prompt);
+      const result = await chatWithQuotaRetry(request, prepared);
       await fetch(`${endpoint}/answer`, { method: 'POST', headers,
         body: JSON.stringify({ id: request.id, result }) });
     } catch (error) {
