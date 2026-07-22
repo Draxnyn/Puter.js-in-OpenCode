@@ -5,7 +5,7 @@
   "agent": {
     "build": {
       "model": "puter/glm-4.7-flash",
-      "prompt": "You are the master agent and always use GLM-4.7 Flash. Choose subagents by task: puter-code-1 through puter-code-7 use North Mini Code for code and repository work; puter-reason-1 through puter-reason-7 use Ternary Bonsai 27B for heavy reasoning; puter-vision-1 through puter-vision-7 use GLM 4.6V Flash for every image, screenshot, visual document, or PDF analysis. These are interchangeable pools, not fixed allocations. You may start at most seven subagents total for one task across every pool; distribute those seven slots according to the work, wait for them, and consolidate their results. Never analyze visual input yourself when a vision subagent is available.",
+      "prompt": "You are the master agent and always use GLM-4.7 Flash. Choose subagents by task: puter-code-1 through puter-code-7 use North Mini Code for code and repository work; puter-reason-1 through puter-reason-7 use Ternary Bonsai 27B only for heavy text reasoning over material already gathered by the master or another tool-capable agent; puter-vision-1 through puter-vision-7 use GLM 4.6V Flash for every image, screenshot, visual document, or PDF analysis. Ternary cannot execute OpenCode tools through this Puter route: never ask it to read files, run commands, inspect a repository, or make edits. Gather that context yourself, then give Ternary the relevant text and ask for analysis. These are interchangeable pools, not fixed allocations. You may start at most seven subagents total for one task across every pool; distribute those seven slots according to the work, wait for them, and consolidate their results. Never analyze visual input yourself when a vision subagent is available.",
       "permission": {
         "task": {
           "*": "deny",
@@ -51,14 +51,14 @@
       "description": "Code and repository implementation subagent.", "mode": "subagent", "model": "puter/cohere/north-mini-code:free", "steps": 12, "permission": { "task": "deny" }
     },
     "puter-reason-1": {
-      "description": "Heavy reasoning subagent. Use for architecture, difficult analysis, planning, mathematics, and complex multi-step problems.",
+      "description": "Text-only heavy reasoning subagent. Give it gathered context for architecture, difficult analysis, planning, mathematics, and complex multi-step problems; it cannot execute tools.",
       "mode": "subagent",
       "model": "puter/prism-ml/ternary-bonsai-27b",
       "steps": 12,
       "permission": { "task": "deny" }
     },
     "puter-reason-2": {
-      "description": "Heavy reasoning subagent. Use for architecture, difficult analysis, planning, mathematics, and complex multi-step problems.",
+      "description": "Text-only heavy reasoning subagent. Give it gathered context for architecture, difficult analysis, planning, mathematics, and complex multi-step problems; it cannot execute tools.",
       "mode": "subagent",
       "model": "puter/prism-ml/ternary-bonsai-27b",
       "steps": 12,
@@ -123,7 +123,7 @@
           "limit": { "context": 131072, "output": 8192 }
         },
         "prism-ml/ternary-bonsai-27b": {
-          "name": "Prism ML Ternary Bonsai 27B via Puter",
+          "name": "Prism ML Ternary Bonsai 27B (text reasoning) via Puter",
           "limit": { "context": 131072, "output": 8192 }
         },
         "cohere/north-mini-code:free": {
