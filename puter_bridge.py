@@ -181,6 +181,56 @@ def attach_local_media(messages: list[object], puter_model: str) -> list[object]
     return [*messages, {"role": "user", "content": content}]
 
 
+def normalize_messages_for_puter(messages: list[object]) -> list[dict[str, object]]:
+    """Keep OpenCode's richer content blocks within Puter's text/file schema."""
+    normalized: list[dict[str, object]] = []
+    for source in messages:
+        if not isinstance(source, dict):
+            normalized.append({"role": "user", "content": str(source)})
+            continue
+        role = str(source.get("role", "user"))
+        if role not in {"system", "assistant", "user", "tool"}:
+            role = "user"
+        content = source.get("content", "")
+        if not isinstance(content, list):
+            message: dict[str, object] = {"role": role, "content": str(content or "")}
+        else:
+            blocks: list[dict[str, object]] = []
+            for block in content:
+                if not isinstance(block, dict):
+                    blocks.append({"type": "text", "text": str(block)})
+                    continue
+                block_type = str(block.get("type", ""))
+                if block_type == "text":
+                    blocks.append({"type": "text", "text": str(block.get("text", ""))})
+                elif block_type in {"file", "local_file"}:
+                    blocks.append(block)
+                elif block_type == "image_url" and isinstance(block.get("image_url"), dict):
+                    url = str(block["image_url"].get("url", ""))
+                    if url:
+                        blocks.append({
+                            "type": "local_file",
+                            "name": "image-attachment",
+                            "mime": "image/*",
+                            "data_url": url,
+                        })
+                else:
+                    # OpenCode includes blocks such as tool-call and tool-result.
+                    # Puter only accepts text and file blocks, so preserve their
+                    # information as text instead of forwarding an invalid type.
+                    blocks.append({
+                        "type": "text",
+                        "text": json.dumps(block, ensure_ascii=False),
+                    })
+            message = {"role": role, "content": blocks}
+        if isinstance(source.get("tool_calls"), list):
+            message["tool_calls"] = source["tool_calls"]
+        if role == "tool" and source.get("tool_call_id") is not None:
+            message["tool_call_id"] = str(source["tool_call_id"])
+        normalized.append(message)
+    return normalized
+
+
 def content_from_result(result: object) -> str:
     if isinstance(result, str):
         return result
@@ -328,7 +378,7 @@ class Handler(BaseHTTPRequestHandler):
         options: dict[str, object] = {"tools": body.get("tools", [])}
         if body.get("tool_choice") is not None:
             options["tool_choice"] = body["tool_choice"]
-        prompt = attach_local_media(messages, puter_model)
+        prompt = normalize_messages_for_puter(attach_local_media(messages, puter_model))
         result = bridge.submit(prompt, puter_model, options)
         return message_from_result(result), uuid.uuid4().hex, usage_from_result(result), opencode_model
 
