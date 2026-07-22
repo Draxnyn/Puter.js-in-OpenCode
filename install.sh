@@ -120,6 +120,17 @@ if [[ -f "$HOME/.bashrc" ]] && ! grep -Fqx "$path_line" "$HOME/.bashrc"; then
     printf '\n# OpenCode Puter bridge\n%s\n' "$path_line" >> "$HOME/.bashrc"
 fi
 
+# Fish often adds ~/.opencode/bin first. Put the wrapper ahead of it so that
+# `opencode` enters Puter mode and `opencode -n` can select normal mode.
+fish_config="$HOME/.config/fish/config.fish"
+fish_path_line='fish_add_path --move --prepend "$HOME/.local/bin"'
+if command -v fish >/dev/null 2>&1; then
+    mkdir -p "$(dirname "$fish_config")"
+    if [[ ! -f "$fish_config" ]] || ! grep -Fqx "$fish_path_line" "$fish_config"; then
+        printf '\n# OpenCode Puter bridge\n%s\n' "$fish_path_line" >> "$fish_config"
+    fi
+fi
+
 printf '\nInstalled successfully.\n'
 printf 'Restart the terminal or run: source ~/.bashrc\n'
 printf 'Puter mode: opencode\n'

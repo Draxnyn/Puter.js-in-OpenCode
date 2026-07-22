@@ -9,6 +9,11 @@ real_opencode="${OPENCODE_REAL_BIN:-$HOME/.opencode/bin/opencode}"
 
 if [[ "${1:-}" == "-n" ]]; then
     shift
+    # Recent OpenCode builds show the CLI help for an empty invocation. Passing
+    # the current directory explicitly starts the normal TUI.
+    if (( $# == 0 )); then
+        exec "$real_opencode" .
+    fi
     exec "$real_opencode" "$@"
 fi
 
