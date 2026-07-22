@@ -203,8 +203,26 @@ def normalize_messages_for_puter(messages: list[object]) -> list[dict[str, objec
                 block_type = str(block.get("type", ""))
                 if block_type == "text":
                     blocks.append({"type": "text", "text": str(block.get("text", ""))})
-                elif block_type in {"file", "local_file"}:
+                elif block_type == "local_file":
                     blocks.append(block)
+                elif block_type == "file":
+                    puter_path = block.get("puter_path")
+                    if isinstance(puter_path, str) and puter_path:
+                        blocks.append({"type": "file", "puter_path": puter_path})
+                    else:
+                        data_url = str(block.get("data_url") or block.get("url") or "")
+                        if data_url:
+                            blocks.append({
+                                "type": "local_file",
+                                "name": str(block.get("name") or block.get("filename") or "attachment"),
+                                "mime": str(block.get("mime") or "application/octet-stream"),
+                                "data_url": data_url,
+                            })
+                        else:
+                            blocks.append({
+                                "type": "text",
+                                "text": json.dumps(block, ensure_ascii=False),
+                            })
                 elif block_type == "image_url" and isinstance(block.get("image_url"), dict):
                     url = str(block["image_url"].get("url", ""))
                     if url:
