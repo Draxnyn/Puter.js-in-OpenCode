@@ -36,22 +36,10 @@
 
   async function prepareLocalFiles(request) {
     const temporaryPaths = [];
-    const mediaURLs = [];
     let fileIndex = 0;
     const prompt = await Promise.all(request.prompt.map(async message => {
       if (!Array.isArray(message?.content)) return message;
       const content = await Promise.all(message.content.map(async part => {
-        if (part?.type === 'bridge_media') {
-          const blob = await fetch(part.data_url).then(response => response.blob());
-          const uploaded = await puter.fs.write(
-            `opencode-bridge-${request.id}-media-${fileIndex++}`,
-            blob,
-            { overwrite: true }
-          );
-          temporaryPaths.push(uploaded.path);
-          mediaURLs.push(uploaded.path);
-          return null;
-        }
         if (part?.type !== 'local_file') return part;
         const blob = await fetch(part.data_url).then(response => response.blob());
         const safeName = String(part.name || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -65,15 +53,7 @@
       }));
       return { ...message, content: content.filter(Boolean) };
     }));
-    const mediaPrompt = prompt.map(message => {
-      if (typeof message?.content === 'string') return message.content;
-      if (!Array.isArray(message?.content)) return '';
-      return message.content
-        .filter(part => part?.type === 'text')
-        .map(part => part.text || '')
-        .join('\n');
-    }).filter(Boolean).join('\n\n');
-    return { prompt, temporaryPaths, mediaURLs, mediaPrompt };
+    return { prompt, temporaryPaths };
   }
 
   async function removeTemporaryFiles(paths) {
@@ -84,12 +64,6 @@
     let attempt = 0;
     for (;;) {
       try {
-        if (prepared.mediaURLs.length) {
-          return await puter.ai.chat(prepared.mediaPrompt, prepared.mediaURLs, false, {
-            model: request.model,
-            ...(request.options || {})
-          });
-        }
         return await puter.ai.chat(prepared.prompt, {
           model: request.model,
           ...(request.options || {})

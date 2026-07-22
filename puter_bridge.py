@@ -184,7 +184,7 @@ def attach_local_media(messages: list[object], puter_model: str) -> list[object]
         mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         data_url = f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
         if mime.startswith("image/"):
-            content.append({"type": "bridge_media", "data_url": data_url})
+            content.append({"type": "image_url", "image_url": {"url": data_url}})
         else:
             content.append({
                 "type": "local_file",
@@ -243,7 +243,7 @@ def normalize_messages_for_puter(messages: list[object]) -> list[dict[str, objec
                 elif block_type == "image_url" and isinstance(block.get("image_url"), dict):
                     url = str(block["image_url"].get("url", ""))
                     if url:
-                        blocks.append({"type": "bridge_media", "data_url": url})
+                        blocks.append({"type": "image_url", "image_url": {"url": url}})
                 else:
                     # OpenCode includes blocks such as tool-call and tool-result.
                     # Puter only accepts text and file blocks, so preserve their
@@ -405,10 +405,26 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(messages, list) or not messages:
             raise ValueError("messages is required.")
 
-        options: dict[str, object] = {"tools": body.get("tools", [])}
-        if body.get("tool_choice") is not None:
-            options["tool_choice"] = body["tool_choice"]
         prompt = normalize_messages_for_puter(attach_local_media(messages, puter_model))
+        has_image = any(
+            isinstance(message.get("content"), list)
+            and any(
+                isinstance(block, dict) and block.get("type") == "image_url"
+                for block in message["content"]
+            )
+            for message in prompt
+        )
+        options: dict[str, object] = {}
+        # Puter's vision endpoint accepts image_url messages, but rejects the
+        # same multimodal request when OpenCode tool schemas are attached.
+        # Keep tools for locating files; omit them only on the turn that sends
+        # the actual image, matching the working Telegram integration.
+        if not has_image:
+            tools = body.get("tools")
+            if isinstance(tools, list) and tools:
+                options["tools"] = tools
+            if body.get("tool_choice") is not None:
+                options["tool_choice"] = body["tool_choice"]
         result = bridge.submit(prompt, puter_model, options)
         return message_from_result(result), uuid.uuid4().hex, usage_from_result(result), opencode_model
 
