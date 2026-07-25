@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **GLM-4.7 Flash is the default master model**.
+**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **Ling 3.0 Flash is the default master model**.
 
 ---
 
@@ -20,10 +20,10 @@ The bridge stays on `127.0.0.1`; no Puter session token is sent to an external s
 
 ## What it provides
 
-- Default master model: `puter/glm-4.7-flash`.
+- Default master model: `puter/ling-3.0-flash`.
 - OpenAI-compatible `/v1/chat/completions` endpoint.
 - Tool-call translation for agentic OpenCode actions.
-- Selected free Puter models for master, coding, reasoning, and vision work.
+- Three selected Puter models: Ling for orchestration, GLM 4.7 Flash for subagents, and GLM 4.6V Flash for vision.
 - Configurable browser-side concurrency, defaulting to two simultaneous Puter requests.
 - Token usage forwarding when Puter includes usage metadata in its response.
 
@@ -31,9 +31,8 @@ The bridge stays on `127.0.0.1`; no Puter session token is sent to an external s
 
 | Model | Puter ID | Intended use |
 |---|---|---|
-| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Default master; routing, agentic coding and tools |
-| Cohere North Mini Code | `cohere/north-mini-code:free` | Code and repository work |
-| Prism ML Ternary Bonsai 27B | `prism-ml/ternary-bonsai-27b` | Heavier reasoning and architecture |
+| Ling 3.0 Flash | `inclusionai/ling-3.0-flash:free` | Default master and orchestration |
+| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Text, coding, repository, and tool subagents |
 | Z.AI GLM 4.6V Flash | `z-ai/glm-4.6v-flash` | Images, screenshots, visual documents and PDFs |
 
 ---

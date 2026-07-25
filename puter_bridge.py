@@ -28,15 +28,12 @@ TOKEN = os.environ["PUTER_BRIDGE_TOKEN"]
 REQUEST_TIMEOUT = int(os.getenv("PUTER_BRIDGE_TIMEOUT", "600"))
 PAGE = Path(__file__).with_name("puter_bridge.html")
 MODEL_MAP = {
+    "ling-3.0-flash": "inclusionai/ling-3.0-flash:free",
     "glm-4.7-flash": "z-ai:z-ai/glm-4.7-flash",
-    "prism-ml/ternary-bonsai-27b": "prism-ml/ternary-bonsai-27b",
-    "cohere/north-mini-code:free": "cohere/north-mini-code:free",
     "z-ai/glm-4.6v-flash": "z-ai/glm-4.6v-flash",
 }
 VISION_MODEL = "z-ai/glm-4.6v-flash"
-# Puter's current Ternary provider rejects OpenCode's tool-schema payload with
-# process_messages_failed. It remains useful as a text reasoning subagent.
-MODELS_WITHOUT_PUTER_TOOL_CALLS = {"prism-ml/ternary-bonsai-27b"}
+MODELS_WITHOUT_PUTER_TOOL_CALLS: set[str] = set()
 LOCAL_MEDIA_SUFFIXES = {".gif", ".jpeg", ".jpg", ".pdf", ".png", ".webp"}
 MAX_LOCAL_MEDIA_BYTES = int(os.getenv("PUTER_MAX_LOCAL_MEDIA_BYTES", str(20 * 1024 * 1024)))
 QUOTED_LOCAL_PATH = re.compile(r'''["'](/[^"']+)["']''')
