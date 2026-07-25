@@ -12,6 +12,11 @@ fi
 export PUTER_BRIDGE_TOKEN="${PUTER_BRIDGE_TOKEN:-$(openssl rand -hex 32)}"
 export PUTER_BRIDGE_PORT="${PUTER_BRIDGE_PORT:-8765}"
 
+if ss -ltn | grep -Eq "127\\.0\\.0\\.1:${PUTER_BRIDGE_PORT}[[:space:]]"; then
+    printf 'A Puter bridge is already listening on port %s. Close that OpenCode session before starting another one.\n' "$PUTER_BRIDGE_PORT" >&2
+    exit 1
+fi
+
 state_dir="${XDG_STATE_HOME:-"${HOME}/.local/state"}/opencode"
 bridge_log="${state_dir}/puter-bridge.log"
 mkdir -p "$state_dir"

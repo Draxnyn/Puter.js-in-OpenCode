@@ -378,8 +378,10 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
+            self.send_header("Connection", "close")
             self.end_headers()
             self.wfile.write(body)
+            self.close_connection = True
         except (BrokenPipeError, ConnectionResetError):
             # The page can close during long polling; this is not a bridge error.
             logger.debug("Client disconnected before receiving its response.")
@@ -387,6 +389,15 @@ class Handler(BaseHTTPRequestHandler):
     def read_json(self) -> dict[str, object]:
         length = int(self.headers.get("Content-Length", "0"))
         return json.loads(self.rfile.read(length))
+
+    def discard_request_body(self) -> None:
+        """Drain an unexpected POST body before replying, keeping it out of request parsing."""
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length > 0:
+            self.rfile.read(length)
 
     def send_sse(self, payload: object) -> None:
         self.wfile.write(f"data: {json.dumps(payload, ensure_ascii=False)}\n\n".encode())
@@ -517,6 +528,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         path = urlparse(self.path).path
         if not self.authorized():
+            self.discard_request_body()
             self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return
         if path == "/v1/chat/completions":
@@ -533,6 +545,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.BAD_GATEWAY, {"error": str(error)})
             return
         if path != "/answer":
+            self.discard_request_body()
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
             return
         try:
